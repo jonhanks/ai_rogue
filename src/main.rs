@@ -37,12 +37,13 @@ impl eframe::App for RoguelikeApp {
         // Main UI layout
         egui::CentralPanel::default().show(ctx, |ui| {
             ui.horizontal(|ui| {
-                // World view panel (left side, takes most space)
+                // World view panel (left side, takes most space and full height)
                 ui.allocate_ui_with_layout(
                     egui::vec2(ui.available_width() * 0.75, ui.available_height()),
                     egui::Layout::top_down(egui::Align::Min),
                     |ui| {
                         ui.group(|ui| {
+                            ui.set_height(ui.available_height());
                             ui.label("World View");
                             ui.separator();
                             self.draw_world_view(ui);
@@ -52,11 +53,12 @@ impl eframe::App for RoguelikeApp {
 
                 ui.separator();
 
-                // Information panel (right side)
+                // Information panel (right side, full height)
                 ui.allocate_ui_with_layout(
                     egui::vec2(ui.available_width(), ui.available_height()),
                     egui::Layout::top_down(egui::Align::Min),
                     |ui| {
+                        ui.set_height(ui.available_height());
                         self.draw_info_panel(ui);
                     },
                 );
@@ -112,9 +114,9 @@ impl RoguelikeApp {
                 ui.label(format!("World Size: {}x{}", self.world_size.0, self.world_size.1));
                 ui.label(format!("Player Position: ({}, {})", self.player_pos.0, self.player_pos.1));
                 
-                // Simple ASCII-style representation
+                // Simple ASCII-style representation that takes remaining space
                 egui::ScrollArea::both()
-                    .max_height(available_size.y - 50.0)
+                    .max_height(ui.available_height())
                     .show(ui, |ui| {
                         ui.style_mut().override_font_id = Some(egui::FontId::monospace(12.0));
                         
