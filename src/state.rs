@@ -218,14 +218,27 @@ impl GameState {
     pub fn try_move_player(&mut self, dx: i32, dy: i32) -> bool {
         let new_pos = (self.player.position.0 + dx, self.player.position.1 + dy);
 
-        if self.world.is_valid_position(new_pos.0, new_pos.1) &&
-            self.world.is_walkable(new_pos.0, new_pos.1) {
+        if !self.world.is_valid_position(new_pos.0, new_pos.1) ||
+            !self.world.is_walkable(new_pos.0, new_pos.1) {
+            self.add_log_message("Can't move there!".to_string());
+            return false;
+        }
+
+        // Check for NPC collision
+        if let Some(npc_index) = self.npcs.iter().position(|npc| npc.position == new_pos) {
+            // Interact with NPC instead of moving
+            let npc = &mut self.npcs[npc_index];
+            self.interact_with_npc(&mut self.player, npc);
+            false
+        } else {
+            // Move player
             self.player.move_to(new_pos);
             self.add_log_message(format!("Moved to ({}, {})", new_pos.0, new_pos.1));
             true
-        } else {
-            self.add_log_message("Can't move there!".to_string());
-            false
         }
+    }
+
+    pub fn interact_with_npc(&mut self, player: &mut Player, npc: &mut NPC) {
+        self.add_log_message(format!("You interact with {}.", npc.name));
     }
 }
