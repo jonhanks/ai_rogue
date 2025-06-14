@@ -349,6 +349,10 @@ impl GameState {
                 self.add_log_message(format!("{} attacks you for {} damage!", npc.name, damage));
                 InteractionResult::NPC(npc)
             }
+            NPCType::Goblin => {
+                self.add_log_message("Goblin cackles and tweaks your nose".to_string());
+                InteractionResult::NPC(npc)
+            }
             _ => {
                 self.add_log_message(format!("You interact with {}.", npc.name));
                 InteractionResult::NPC(npc)
