@@ -257,6 +257,7 @@ impl GameState {
         npcs.push(NPC::new(15, 8, NPCType::Merchant, "The Merchant".to_string()));
         npcs.push(NPC::new(25, 12, NPCType::Skeleton, "Bonecrusher".to_string()));
         npcs.push(NPC::new(8, 20, NPCType::Guard, "Guard Captain".to_string()));
+        npcs.push(NPC::new(30, 25, NPCType::Orc, "Orc Warrior".to_string()));
 
         let mut world = GameWorld::default();
         
