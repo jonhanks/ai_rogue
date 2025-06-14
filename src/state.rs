@@ -226,9 +226,14 @@ impl GameState {
 
         // Check for NPC collision
         if let Some(npc_index) = self.npcs.iter().position(|npc| npc.position == new_pos) {
+            // Remove NPC temporarily to avoid borrow checker issues
+            let mut npc = self.npcs.remove(npc_index);
+            
             // Interact with NPC instead of moving
-            let npc = &mut self.npcs[npc_index];
-            self.interact_with_npc(&mut self.player, npc);
+            self.interact_with_npc(&mut npc);
+            
+            // Add NPC back to the vector
+            self.npcs.push(npc);
             false
         } else {
             // Move player
@@ -238,7 +243,7 @@ impl GameState {
         }
     }
 
-    pub fn interact_with_npc(&mut self, player: &mut Player, npc: &mut NPC) {
+    pub fn interact_with_npc(&mut self, npc: &mut NPC) {
         self.add_log_message(format!("You interact with {}.", npc.name));
     }
 }
