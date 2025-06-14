@@ -251,9 +251,19 @@ impl GameState {
         npcs.push(NPC::new(25, 12, NPCType::Skeleton, "Bonecrusher".to_string()));
         npcs.push(NPC::new(8, 20, NPCType::Guard, "Guard Captain".to_string()));
 
+        let mut world = GameWorld::default();
+        
+        // Add treasure chest at a specific location
+        let treasure_chest = Item::new(
+            ItemType::Treasure,
+            "Treasure Chest".to_string(),
+            "A mysterious chest that might contain valuable items.".to_string(),
+        );
+        world.items.push(WorldItem::new(35, 18, treasure_chest));
+
         Self {
             player: Player::default(),
-            world: GameWorld::default(),
+            world,
             npcs,
             log_messages: vec![
                 "Welcome to the dungeon!".to_string(),
