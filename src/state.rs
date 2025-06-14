@@ -135,6 +135,13 @@ impl WorldItem {
     }
 }
 
+#[derive(Debug)]
+pub enum InteractionResult {
+    Nothing,
+    NPC(NPC),
+    Item(Item),
+}
+
 impl NPC {
     pub fn new(x: i32, y: i32, npc_type: NPCType, name: String) -> Self {
         Self {
@@ -295,13 +302,25 @@ impl GameState {
         // Check for NPC collision
         if let Some(npc_index) = self.npcs.iter().position(|npc| npc.position == new_pos) {
             // Remove NPC temporarily to avoid borrow checker issues
-            let mut npc = self.npcs.remove(npc_index);
+            let npc = self.npcs.remove(npc_index);
             
             // Interact with NPC instead of moving
-            self.interact_with_npc(&mut npc);
+            let result = self.interact_with_npc(npc);
             
-            // Add NPC back to the vector
-            self.npcs.push(npc);
+            // Handle interaction result
+            match result {
+                InteractionResult::Nothing => {
+                    // Do nothing
+                }
+                InteractionResult::NPC(npc) => {
+                    // Add NPC back to the vector
+                    self.npcs.push(npc);
+                }
+                InteractionResult::Item(item) => {
+                    // Add item to world at NPC's position
+                    self.world.items.push(WorldItem::new(new_pos.0, new_pos.1, item));
+                }
+            }
             false
         } else {
             // Move player
@@ -311,7 +330,8 @@ impl GameState {
         }
     }
 
-    pub fn interact_with_npc(&mut self, npc: &mut NPC) {
+    pub fn interact_with_npc(&mut self, npc: NPC) -> InteractionResult {
         self.add_log_message(format!("You interact with {}.", npc.name));
+        InteractionResult::NPC(npc)
     }
 }
