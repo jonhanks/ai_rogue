@@ -6,6 +6,7 @@ use state::{GameState, TileType};
 #[derive(Default)]
 pub struct RoguelikeApp {
     game_state: GameState,
+    show_quit_dialog: bool,
 }
 
 impl RoguelikeApp {
@@ -13,14 +14,20 @@ impl RoguelikeApp {
         // Customize egui here with cc.egui_ctx.set_fonts and cc.egui_ctx.set_style
         Self {
             game_state: GameState::new(),
+            show_quit_dialog: false,
         }
     }
 }
 
 impl eframe::App for RoguelikeApp {
-    fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
+    fn update(&mut self, ctx: &egui::Context, frame: &mut eframe::Frame) {
         // Handle input
         self.handle_input(ctx);
+
+        // Show quit confirmation dialog if needed
+        if self.show_quit_dialog {
+            self.show_quit_confirmation_dialog(ctx, frame);
+        }
 
         // Main UI layout
         egui::CentralPanel::default().show(ctx, |ui| {
@@ -58,29 +65,65 @@ impl eframe::App for RoguelikeApp {
 
 impl RoguelikeApp {
     fn handle_input(&mut self, ctx: &egui::Context) {
-        // Handle keyboard input for movement
+        // Handle keyboard input for movement and quit
         ctx.input(|i| {
-            let mut dx = 0;
-            let mut dy = 0;
-
-            if i.key_pressed(egui::Key::ArrowUp) || i.key_pressed(egui::Key::W) {
-                dy = -1;
-            }
-            if i.key_pressed(egui::Key::ArrowDown) || i.key_pressed(egui::Key::S) {
-                dy = 1;
-            }
-            if i.key_pressed(egui::Key::ArrowLeft) || i.key_pressed(egui::Key::A) {
-                dx = -1;
-            }
-            if i.key_pressed(egui::Key::ArrowRight) || i.key_pressed(egui::Key::D) {
-                dx = 1;
+            // Check for quit key first
+            if i.key_pressed(egui::Key::Q) {
+                self.show_quit_dialog = true;
+                return;
             }
 
-            // Try to move the player
-            if dx != 0 || dy != 0 {
-                self.game_state.try_move_player(dx, dy);
+            // Only handle movement if quit dialog is not shown
+            if !self.show_quit_dialog {
+                let mut dx = 0;
+                let mut dy = 0;
+
+                if i.key_pressed(egui::Key::ArrowUp) || i.key_pressed(egui::Key::W) {
+                    dy = -1;
+                }
+                if i.key_pressed(egui::Key::ArrowDown) || i.key_pressed(egui::Key::S) {
+                    dy = 1;
+                }
+                if i.key_pressed(egui::Key::ArrowLeft) || i.key_pressed(egui::Key::A) {
+                    dx = -1;
+                }
+                if i.key_pressed(egui::Key::ArrowRight) || i.key_pressed(egui::Key::D) {
+                    dx = 1;
+                }
+
+                // Try to move the player
+                if dx != 0 || dy != 0 {
+                    self.game_state.try_move_player(dx, dy);
+                }
             }
         });
+    }
+
+    fn show_quit_confirmation_dialog(&mut self, ctx: &egui::Context, frame: &mut eframe::Frame) {
+        egui::Window::new("Quit Game")
+            .collapsible(false)
+            .resizable(false)
+            .anchor(egui::Align2::CENTER_CENTER, egui::vec2(0.0, 0.0))
+            .show(ctx, |ui| {
+                ui.vertical_centered(|ui| {
+                    ui.add_space(10.0);
+                    ui.label("Are you sure you want to quit?");
+                    ui.add_space(20.0);
+                    
+                    ui.horizontal(|ui| {
+                        ui.add_space(20.0);
+                        if ui.button("Yes").clicked() {
+                            frame.close();
+                        }
+                        ui.add_space(20.0);
+                        if ui.button("No").clicked() {
+                            self.show_quit_dialog = false;
+                        }
+                        ui.add_space(20.0);
+                    });
+                    ui.add_space(10.0);
+                });
+            });
     }
 
     fn draw_world_view(&mut self, ui: &mut egui::Ui) {
@@ -178,6 +221,7 @@ impl RoguelikeApp {
             ui.label("Controls");
             ui.separator();
             ui.label("Arrow Keys / WASD: Move");
+            ui.label("Q: Quit");
             ui.label("More controls coming...");
         });
     }
