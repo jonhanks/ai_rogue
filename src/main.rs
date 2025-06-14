@@ -1,7 +1,7 @@
 use eframe::egui;
 
 mod state;
-use state::{GameState, TileType};
+use state::{GameState, TileType, NPC, NPCType};
 
 #[derive(Default)]
 pub struct RoguelikeApp {
@@ -154,6 +154,9 @@ impl RoguelikeApp {
                                 if x == self.game_state.player.position.0 as usize &&
                                     y == self.game_state.player.position.1 as usize {
                                     row.push('@'); // Player
+                                } else if let Some(npc) = self.game_state.npcs.iter().find(|npc| 
+                                    npc.position.0 == x as i32 && npc.position.1 == y as i32) {
+                                    row.push(npc.get_display_char()); // NPC
                                 } else {
                                     let tile_char = match self.game_state.world.get_tile(x as i32, y as i32) {
                                         Some(TileType::Wall) => '#',

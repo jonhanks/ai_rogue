@@ -62,6 +62,48 @@ pub enum TileType {
     Empty,
 }
 
+#[derive(Debug, Clone)]
+pub struct NPC {
+    pub position: (i32, i32),
+    pub inventory: Vec<String>,
+    pub npc_type: NPCType,
+    pub name: String,
+}
+
+#[derive(Debug, Clone, PartialEq)]
+pub enum NPCType {
+    Goblin,
+    Orc,
+    Skeleton,
+    Merchant,
+    Guard,
+}
+
+impl NPC {
+    pub fn new(x: i32, y: i32, npc_type: NPCType, name: String) -> Self {
+        Self {
+            position: (x, y),
+            inventory: Vec::new(),
+            npc_type,
+            name,
+        }
+    }
+
+    pub fn get_display_char(&self) -> char {
+        match self.npc_type {
+            NPCType::Goblin => 'g',
+            NPCType::Orc => 'O',
+            NPCType::Skeleton => 'S',
+            NPCType::Merchant => 'M',
+            NPCType::Guard => 'G',
+        }
+    }
+
+    pub fn move_to(&mut self, new_pos: (i32, i32)) {
+        self.position = new_pos;
+    }
+}
+
 impl Default for GameWorld {
     fn default() -> Self {
         let size = (50, 30);
@@ -138,15 +180,23 @@ impl GameWorld {
 pub struct GameState {
     pub player: Player,
     pub world: GameWorld,
+    pub npcs: Vec<NPC>,
     pub log_messages: Vec<String>,
     pub game_over: bool,
 }
 
 impl GameState {
     pub fn new() -> Self {
+        let mut npcs = Vec::new();
+        npcs.push(NPC::new(5, 5, NPCType::Goblin, "Grob".to_string()));
+        npcs.push(NPC::new(15, 8, NPCType::Merchant, "The Merchant".to_string()));
+        npcs.push(NPC::new(25, 12, NPCType::Skeleton, "Bonecrusher".to_string()));
+        npcs.push(NPC::new(8, 20, NPCType::Guard, "Guard Captain".to_string()));
+
         Self {
             player: Player::default(),
             world: GameWorld::default(),
+            npcs,
             log_messages: vec![
                 "Welcome to the dungeon!".to_string(),
                 "Press arrow keys to move.".to_string(),
