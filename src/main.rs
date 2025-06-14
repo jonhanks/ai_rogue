@@ -1,7 +1,7 @@
 use eframe::egui;
 
 mod state;
-use state::{GameState, TileType, NPC, NPCType};
+use state::{GameState, TileType, NPC, NPCType, Item, ItemType};
 
 #[derive(Default)]
 pub struct RoguelikeApp {
@@ -157,6 +157,9 @@ impl RoguelikeApp {
                                 } else if let Some(npc) = self.game_state.npcs.iter().find(|npc| 
                                     npc.position.0 == x as i32 && npc.position.1 == y as i32) {
                                     row.push(npc.get_display_char()); // NPC
+                                } else if let Some(world_item) = self.game_state.world.items.iter().find(|item| 
+                                    item.position.0 == x as i32 && item.position.1 == y as i32) {
+                                    row.push(world_item.item.get_display_char()); // Item
                                 } else {
                                     let tile_char = match self.game_state.world.get_tile(x as i32, y as i32) {
                                         Some(TileType::Wall) => '#',
@@ -197,7 +200,7 @@ impl RoguelikeApp {
                 ui.label("Empty");
             } else {
                 for item in &self.game_state.player.inventory {
-                    ui.label(item);
+                    ui.label(&item.label);
                 }
             }
         });

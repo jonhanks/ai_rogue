@@ -5,7 +5,7 @@ pub struct Player {
     pub max_health: i32,
     pub level: i32,
     pub experience: i32,
-    pub inventory: Vec<String>, // Placeholder for now
+    pub inventory: Vec<Item>,
 }
 
 impl Default for Player {
@@ -51,6 +51,7 @@ pub struct GameWorld {
     pub size: (usize, usize), // width, height
     pub current_floor: i32,
     pub tiles: Vec<Vec<TileType>>, // 2D grid of tiles
+    pub items: Vec<WorldItem>, // Items placed in the world
 }
 
 #[derive(Debug, Clone, PartialEq)]
@@ -65,7 +66,7 @@ pub enum TileType {
 #[derive(Debug, Clone)]
 pub struct NPC {
     pub position: (i32, i32),
-    pub inventory: Vec<String>,
+    pub inventory: Vec<Item>,
     pub npc_type: NPCType,
     pub name: String,
 }
@@ -77,6 +78,61 @@ pub enum NPCType {
     Skeleton,
     Merchant,
     Guard,
+}
+
+#[derive(Debug, Clone)]
+pub struct Item {
+    pub item_type: ItemType,
+    pub label: String,
+    pub description: String,
+}
+
+#[derive(Debug, Clone, PartialEq)]
+pub enum ItemType {
+    Weapon,
+    Armor,
+    Potion,
+    Food,
+    Tool,
+    Key,
+    Treasure,
+}
+
+impl Item {
+    pub fn new(item_type: ItemType, label: String, description: String) -> Self {
+        Self {
+            item_type,
+            label,
+            description,
+        }
+    }
+
+    pub fn get_display_char(&self) -> char {
+        match self.item_type {
+            ItemType::Weapon => '/',
+            ItemType::Armor => '[',
+            ItemType::Potion => '!',
+            ItemType::Food => '%',
+            ItemType::Tool => '(',
+            ItemType::Key => '-',
+            ItemType::Treasure => '$',
+        }
+    }
+}
+
+#[derive(Debug, Clone)]
+pub struct WorldItem {
+    pub position: (i32, i32),
+    pub item: Item,
+}
+
+impl WorldItem {
+    pub fn new(x: i32, y: i32, item: Item) -> Self {
+        Self {
+            position: (x, y),
+            item,
+        }
+    }
 }
 
 impl NPC {
@@ -126,6 +182,7 @@ impl Default for GameWorld {
             size,
             current_floor: 1,
             tiles,
+            items: Vec::new(),
         }
     }
 }
@@ -136,6 +193,7 @@ impl GameWorld {
             size: (width, height),
             current_floor: 1,
             tiles: vec![vec![TileType::Empty; height]; width],
+            items: Vec::new(),
         };
         world.generate_simple_room();
         world
