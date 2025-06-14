@@ -331,7 +331,20 @@ impl GameState {
     }
 
     pub fn interact_with_npc(&mut self, npc: NPC) -> InteractionResult {
-        self.add_log_message(format!("You interact with {}.", npc.name));
-        InteractionResult::NPC(npc)
+        match npc.npc_type {
+            NPCType::Skeleton => {
+                self.add_log_message("The skeleton collapses to a pile of bones".to_string());
+                let key = Item::new(
+                    ItemType::Key,
+                    "Bone Key".to_string(),
+                    "A key carved from ancient bone.".to_string(),
+                );
+                InteractionResult::Item(key)
+            }
+            _ => {
+                self.add_log_message(format!("You interact with {}.", npc.name));
+                InteractionResult::NPC(npc)
+            }
+        }
     }
 }
