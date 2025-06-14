@@ -113,7 +113,7 @@ impl RoguelikeApp {
                     ui.horizontal(|ui| {
                         ui.add_space(20.0);
                         if ui.button("Yes").clicked() {
-                            frame.close();
+                            ui.ctx().send_viewport_cmd(egui::ViewportCommand::Close);
                         }
                         ui.add_space(20.0);
                         if ui.button("No").clicked() {
