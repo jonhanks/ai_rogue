@@ -341,6 +341,13 @@ impl GameState {
                 );
                 InteractionResult::Item(key)
             }
+            NPCType::Orc => {
+                use rand::Rng;
+                let damage = rand::thread_rng().gen_range(5..=20);
+                self.player.take_damage(damage);
+                self.add_log_message(format!("{} attacks you for {} damage!", npc.name, damage));
+                InteractionResult::NPC(npc)
+            }
             _ => {
                 self.add_log_message(format!("You interact with {}.", npc.name));
                 InteractionResult::NPC(npc)
