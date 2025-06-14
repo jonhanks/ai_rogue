@@ -36,10 +36,11 @@ impl eframe::App for RoguelikeApp {
 
         // Main UI layout
         egui::CentralPanel::default().show(ctx, |ui| {
+            let desired_height = ui.available_height();
             ui.horizontal(|ui| {
                 // World view panel (left side, takes most space and full height)
                 ui.allocate_ui_with_layout(
-                    egui::vec2(ui.available_width() * 0.75, ui.available_height()),
+                    egui::vec2(ui.available_width() * 0.75, desired_height),
                     egui::Layout::top_down(egui::Align::Min),
                     |ui| {
                         ui.group(|ui| {
