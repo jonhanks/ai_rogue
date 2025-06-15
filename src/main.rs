@@ -301,69 +301,47 @@ impl RoguelikeApp {
                 let visible_width = self.game_state.world.size.0.min(60);
                 let visible_height = self.game_state.world.size.1.min(30);
                 
-                let scroll_area_response = egui::ScrollArea::both()
+                egui::ScrollArea::both()
                     .max_height(ui.available_height())
                     .show(ui, |ui| {
                         ui.style_mut().override_font_id = Some(egui::FontId::monospace(12.0));
-
-                        // Calculate character size for mouse position calculation
-                        let font_size = 12.0;
-                        let char_width = font_size * 0.6; // Approximate monospace character width
-                        let line_height = font_size * 1.2; // Approximate line height
-
-                        // Get the top-left position of the text area
-                        let start_pos = ui.cursor().min;
+                        ui.spacing_mut().item_spacing.y = 0.0; // No spacing between rows
 
                         for y in 0..visible_height {
-                            let mut row = String::new();
-                            for x in 0..visible_width {
-                                if x == self.game_state.player.position.0 as usize &&
-                                    y == self.game_state.player.position.1 as usize {
-                                    row.push('@'); // Player
-                                } else if let Some(npc) = self.game_state.npcs.iter().find(|npc| 
-                                    npc.position.0 == x as i32 && npc.position.1 == y as i32) {
-                                    row.push(npc.get_display_char()); // NPC
-                                } else if let Some(world_item) = self.game_state.world.items.iter().find(|item| 
-                                    item.position.0 == x as i32 && item.position.1 == y as i32) {
-                                    row.push(world_item.item.get_display_char()); // Item
-                                } else {
-                                    let tile_char = match self.game_state.world.get_tile(x as i32, y as i32) {
-                                        Some(TileType::Wall) => '#',
-                                        Some(TileType::Floor) => '.',
-                                        Some(TileType::Door) => '+',
-                                        Some(TileType::Stairs) => '>',
-                                        Some(TileType::Empty) => ' ',
-                                        None => ' ',
+                            ui.horizontal(|ui| {
+                                ui.spacing_mut().item_spacing.x = 0.0; // No spacing between characters
+                                
+                                for x in 0..visible_width {
+                                    let tile_char = if x == self.game_state.player.position.0 as usize &&
+                                        y == self.game_state.player.position.1 as usize {
+                                        '@' // Player
+                                    } else if let Some(npc) = self.game_state.npcs.iter().find(|npc| 
+                                        npc.position.0 == x as i32 && npc.position.1 == y as i32) {
+                                        npc.get_display_char() // NPC
+                                    } else if let Some(world_item) = self.game_state.world.items.iter().find(|item| 
+                                        item.position.0 == x as i32 && item.position.1 == y as i32) {
+                                        world_item.item.get_display_char() // Item
+                                    } else {
+                                        match self.game_state.world.get_tile(x as i32, y as i32) {
+                                            Some(TileType::Wall) => '#',
+                                            Some(TileType::Floor) => '.',
+                                            Some(TileType::Door) => '+',
+                                            Some(TileType::Stairs) => '>',
+                                            Some(TileType::Empty) => ' ',
+                                            None => ' ',
+                                        }
                                     };
-                                    row.push(tile_char);
+                                    
+                                    let label = egui::Label::new(tile_char.to_string()).sense(egui::Sense::hover());
+                                    let response = ui.add(label);
+                                    
+                                    if response.hovered() {
+                                        self.mouse_world_pos = Some((x as i32, y as i32));
+                                    }
                                 }
-                            }
-                            ui.label(row);
+                            });
                         }
-
-                        // Return data needed for mouse calculation
-                        (start_pos, font_size * 0.6, font_size * 1.2)
                     });
-
-                // Calculate mouse world position outside the closure
-                if let Some(pointer_pos) = ui.ctx().pointer_hover_pos() {
-                    let (start_pos, char_width, line_height) = scroll_area_response.inner;
-                    let relative_pos = pointer_pos - start_pos;
-                    let scroll_offset = scroll_area_response.state.offset;
-                    let adjusted_pos = relative_pos + scroll_offset;
-
-                    let world_x = (adjusted_pos.x / char_width) as i32;
-                    let world_y = (adjusted_pos.y / line_height) as i32;
-
-                    if world_x >= 0 && world_y >= 0 && 
-                       world_x < visible_width as i32 && world_y < visible_height as i32 {
-                        self.mouse_world_pos = Some((world_x, world_y));
-                    } else {
-                        self.mouse_world_pos = None;
-                    }
-                } else {
-                    self.mouse_world_pos = None;
-                }
             },
         );
     }
