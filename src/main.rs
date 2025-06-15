@@ -391,6 +391,12 @@ impl RoguelikeApp {
 
         ui.add_space(10.0);
 
+        // Show hover description if mouse is over a map position
+        if self.mouse_world_pos.is_some() {
+            self.draw_hover_description(ui);
+            ui.add_space(10.0);
+        }
+
         ui.group(|ui| {
             ui.label("Controls");
             ui.separator();
@@ -400,6 +406,76 @@ impl RoguelikeApp {
             ui.label("Q: Quit");
             ui.label("More controls coming...");
         });
+    }
+
+    fn draw_hover_description(&mut self, ui: &mut egui::Ui) {
+        if let Some((hover_x, hover_y)) = self.mouse_world_pos {
+            ui.group(|ui| {
+                ui.label("Location Details");
+                ui.separator();
+                
+                // Check what's at this position
+                let mut descriptions = Vec::new();
+                
+                // Check if player is here
+                if self.game_state.player.position.0 == hover_x && 
+                   self.game_state.player.position.1 == hover_y {
+                    descriptions.push("Player (@) is here".to_string());
+                }
+                
+                // Check for NPCs
+                if let Some(npc) = self.game_state.npcs.iter().find(|npc| 
+                    npc.position.0 == hover_x && npc.position.1 == hover_y) {
+                    descriptions.push(format!("{} ({}) - {}", npc.name, npc.get_display_char(), 
+                        match npc.npc_type {
+                            NPCType::Goblin => "A mischievous goblin",
+                            NPCType::Orc => "A fierce orc warrior",
+                            NPCType::Skeleton => "Ancient bones animated by dark magic",
+                            NPCType::Merchant => "A traveling merchant",
+                            NPCType::Guard => "A stalwart guard",
+                        }));
+                }
+                
+                // Check for items
+                if let Some(world_item) = self.game_state.world.items.iter().find(|item| 
+                    item.position.0 == hover_x && item.position.1 == hover_y) {
+                    descriptions.push(format!("{} ({}) - {}", 
+                        world_item.item.label, 
+                        world_item.item.get_display_char(), 
+                        world_item.item.description));
+                }
+                
+                // Check tile type
+                if let Some(tile) = self.game_state.world.get_tile(hover_x, hover_y) {
+                    let tile_desc = match tile {
+                        TileType::Wall => "Solid stone wall",
+                        TileType::Floor => "Stone floor",
+                        TileType::Door => "Wooden door",
+                        TileType::Stairs => "Stone stairs",
+                        TileType::Empty => "Empty space",
+                    };
+                    descriptions.push(format!("Terrain: {} ({})", tile_desc, 
+                        match tile {
+                            TileType::Wall => '#',
+                            TileType::Floor => '.',
+                            TileType::Door => '+',
+                            TileType::Stairs => '>',
+                            TileType::Empty => ' ',
+                        }));
+                }
+                
+                ui.label(format!("Position: ({}, {})", hover_x, hover_y));
+                ui.separator();
+                
+                if descriptions.is_empty() {
+                    ui.label("Nothing of interest here.");
+                } else {
+                    for desc in descriptions {
+                        ui.label(desc);
+                    }
+                }
+            });
+        }
     }
 }
 
