@@ -8,6 +8,7 @@ pub struct RoguelikeApp {
     game_state: GameState,
     show_quit_dialog: bool,
     show_use_item_dialog: bool,
+    show_victory_dialog: bool,
 }
 
 impl RoguelikeApp {
@@ -17,6 +18,7 @@ impl RoguelikeApp {
             game_state: GameState::new(),
             show_quit_dialog: false,
             show_use_item_dialog: false,
+            show_victory_dialog: false,
         }
     }
 }
@@ -30,6 +32,17 @@ impl eframe::App for RoguelikeApp {
         if self.game_state.game_over {
             self.show_game_over_dialog(ctx, frame);
             return; // Don't process anything else if game is over
+        }
+
+        // Check for victory condition
+        if self.game_state.player.inventory.iter().any(|item| item.item_type == ItemType::Treasure) {
+            self.show_victory_dialog = true;
+        }
+
+        // Show victory dialog if needed
+        if self.show_victory_dialog {
+            self.show_victory_dialog_window(ctx, frame);
+            return; // Don't process anything else if player won
         }
 
         // Show quit confirmation dialog if needed
@@ -219,6 +232,27 @@ impl RoguelikeApp {
             });
     }
 
+    fn show_victory_dialog_window(&mut self, ctx: &egui::Context, frame: &mut eframe::Frame) {
+        egui::Window::new("Victory!")
+            .collapsible(false)
+            .resizable(false)
+            .anchor(egui::Align2::CENTER_CENTER, egui::vec2(0.0, 0.0))
+            .show(ctx, |ui| {
+                ui.vertical_centered(|ui| {
+                    ui.add_space(10.0);
+                    ui.label("Congratulations!");
+                    ui.label("You have found the treasure and won the game!");
+                    ui.add_space(20.0);
+                    
+                    if ui.button("Ok").clicked() {
+                        ui.ctx().send_viewport_cmd(egui::ViewportCommand::Close);
+                    }
+                    
+                    ui.add_space(10.0);
+                });
+            });
+    }
+
     fn draw_world_view(&mut self, ui: &mut egui::Ui) {
         let available_size = ui.available_size();
 
@@ -227,6 +261,8 @@ impl RoguelikeApp {
             available_size,
             egui::Layout::top_down(egui::Align::Min),
             |ui| {
+                ui.label("GOAL: Find and collect the treasure!");
+                ui.separator();
                 ui.label(format!("World Size: {}x{}", self.game_state.world.size.0, self.game_state.world.size.1));
                 ui.label(format!("Player Position: ({}, {})", self.game_state.player.position.0, self.game_state.player.position.1));
                 ui.label(format!("Floor: {}", self.game_state.world.current_floor));
