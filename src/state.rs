@@ -95,6 +95,7 @@ pub enum ItemType {
     Food,
     Tool,
     Key,
+    TreasureChest,
     Treasure,
 }
 
@@ -115,6 +116,7 @@ impl Item {
             ItemType::Food => '%',
             ItemType::Tool => '(',
             ItemType::Key => '-',
+            ItemType::TreasureChest => '=',
             ItemType::Treasure => '$',
         }
     }
@@ -263,7 +265,7 @@ impl GameState {
         
         // Add treasure chest at a specific location
         let treasure_chest = Item::new(
-            ItemType::Treasure,
+            ItemType::TreasureChest,
             "Treasure Chest".to_string(),
             "A mysterious chest that might contain valuable items.".to_string(),
         );
@@ -379,6 +381,30 @@ impl GameState {
     }
 
     pub fn use_item(&mut self, item: Item) {
-        self.add_log_message(format!("You used {}, but nothing happens.", item.label));
+        match item.item_type {
+            ItemType::Key => {
+                // Check if player has a treasure chest
+                if let Some(chest_index) = self.player.inventory.iter().position(|inv_item| inv_item.item_type == ItemType::TreasureChest) {
+                    // Remove treasure chest from inventory
+                    let _chest = self.player.inventory.remove(chest_index);
+                    
+                    // Log the opening message
+                    self.add_log_message("When the key clicks in the lock the treasure chest spills open, dropping a pile of treasure on the ground".to_string());
+                    
+                    // Create treasure item at player's position
+                    let treasure = Item::new(
+                        ItemType::Treasure,
+                        "Pile of Treasure".to_string(),
+                        "Glittering coins and gems scattered on the ground.".to_string(),
+                    );
+                    self.world.items.push(WorldItem::new(self.player.position.0, self.player.position.1, treasure));
+                } else {
+                    self.add_log_message(format!("You used {}, but you need a treasure chest to unlock.", item.label));
+                }
+            }
+            _ => {
+                self.add_log_message(format!("You used {}, but nothing happens.", item.label));
+            }
+        }
     }
 }
