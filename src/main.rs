@@ -16,6 +16,7 @@ pub enum DialogState {
 pub struct RoguelikeApp {
     game_state: GameState,
     dialog_state: DialogState,
+    mouse_world_pos: Option<(i32, i32)>,
 }
 
 impl RoguelikeApp {
@@ -24,6 +25,7 @@ impl RoguelikeApp {
         Self {
             game_state: GameState::new(),
             dialog_state: DialogState::NoDialog,
+            mouse_world_pos: None,
         }
     }
 }
@@ -275,16 +277,28 @@ impl RoguelikeApp {
                 ui.label(format!("World Size: {}x{}", self.game_state.world.size.0, self.game_state.world.size.1));
                 ui.label(format!("Player Position: ({}, {})", self.game_state.player.position.0, self.game_state.player.position.1));
                 ui.label(format!("Floor: {}", self.game_state.world.current_floor));
+                if let Some((x, y)) = self.mouse_world_pos {
+                    ui.label(format!("Mouse Over: ({}, {})", x, y));
+                } else {
+                    ui.label("Mouse Over: --");
+                }
 
                 // World representation that takes remaining space
-                egui::ScrollArea::both()
+                let visible_width = self.game_state.world.size.0.min(60);
+                let visible_height = self.game_state.world.size.1.min(30);
+                
+                let scroll_area_response = egui::ScrollArea::both()
                     .max_height(ui.available_height())
                     .show(ui, |ui| {
                         ui.style_mut().override_font_id = Some(egui::FontId::monospace(12.0));
 
-                        // Draw the world using the tile system
-                        let visible_width = self.game_state.world.size.0.min(60);
-                        let visible_height = self.game_state.world.size.1.min(30);
+                        // Calculate character size for mouse position calculation
+                        let font_size = 12.0;
+                        let char_width = font_size * 0.6; // Approximate monospace character width
+                        let line_height = font_size * 1.2; // Approximate line height
+
+                        // Get the top-left position of the text area
+                        let start_pos = ui.cursor().min;
 
                         for y in 0..visible_height {
                             let mut row = String::new();
@@ -312,7 +326,30 @@ impl RoguelikeApp {
                             }
                             ui.label(row);
                         }
+
+                        // Return data needed for mouse calculation
+                        (start_pos, font_size * 0.6, font_size * 1.2)
                     });
+
+                // Calculate mouse world position outside the closure
+                if let Some(pointer_pos) = ui.ctx().pointer_hover_pos() {
+                    let (start_pos, char_width, line_height) = scroll_area_response.inner;
+                    let relative_pos = pointer_pos - start_pos;
+                    let scroll_offset = scroll_area_response.state.offset;
+                    let adjusted_pos = relative_pos + scroll_offset;
+
+                    let world_x = (adjusted_pos.x / char_width) as i32;
+                    let world_y = (adjusted_pos.y / line_height) as i32;
+
+                    if world_x >= 0 && world_y >= 0 && 
+                       world_x < visible_width as i32 && world_y < visible_height as i32 {
+                        self.mouse_world_pos = Some((world_x, world_y));
+                    } else {
+                        self.mouse_world_pos = None;
+                    }
+                } else {
+                    self.mouse_world_pos = None;
+                }
             },
         );
     }
