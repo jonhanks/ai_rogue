@@ -7,6 +7,7 @@ use state::{GameState, TileType, NPC, NPCType, Item, ItemType};
 pub struct RoguelikeApp {
     game_state: GameState,
     show_quit_dialog: bool,
+    show_use_item_dialog: bool,
 }
 
 impl RoguelikeApp {
@@ -15,6 +16,7 @@ impl RoguelikeApp {
         Self {
             game_state: GameState::new(),
             show_quit_dialog: false,
+            show_use_item_dialog: false,
         }
     }
 }
@@ -33,6 +35,11 @@ impl eframe::App for RoguelikeApp {
         // Show quit confirmation dialog if needed
         if self.show_quit_dialog {
             self.show_quit_confirmation_dialog(ctx, frame);
+        }
+
+        // Show use item dialog if needed
+        if self.show_use_item_dialog {
+            self.show_use_item_dialog_window(ctx, frame);
         }
 
         // Main UI layout
@@ -85,8 +92,8 @@ impl RoguelikeApp {
                 return;
             }
 
-            // Only handle movement if quit dialog is not shown and game is not over
-            if !self.show_quit_dialog && !self.game_state.game_over {
+            // Only handle movement if no dialogs are shown and game is not over
+            if !self.show_quit_dialog && !self.show_use_item_dialog && !self.game_state.game_over {
                 let mut dx = 0;
                 let mut dy = 0;
 
@@ -111,6 +118,15 @@ impl RoguelikeApp {
                 // Check for pickup command
                 if i.key_pressed(egui::Key::P) {
                     self.game_state.try_pickup_item();
+                }
+
+                // Check for use item command
+                if i.key_pressed(egui::Key::U) {
+                    if !self.game_state.player.inventory.is_empty() {
+                        self.show_use_item_dialog = true;
+                    } else {
+                        self.game_state.add_log_message("You have no items to use.".to_string());
+                    }
                 }
             }
         });
@@ -159,6 +175,45 @@ impl RoguelikeApp {
                         ui.ctx().send_viewport_cmd(egui::ViewportCommand::Close);
                     }
                     
+                    ui.add_space(10.0);
+                });
+            });
+    }
+
+    fn show_use_item_dialog_window(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
+        egui::Window::new("Use Item")
+            .collapsible(false)
+            .resizable(false)
+            .anchor(egui::Align2::CENTER_CENTER, egui::vec2(0.0, 0.0))
+            .show(ctx, |ui| {
+                ui.vertical(|ui| {
+                    ui.add_space(10.0);
+                    ui.label("Choose an item to use:");
+                    ui.add_space(10.0);
+
+                    let mut item_to_use: Option<usize> = None;
+
+                    // Show each item in inventory as a button
+                    for (index, item) in self.game_state.player.inventory.iter().enumerate() {
+                        if ui.button(&item.label).clicked() {
+                            item_to_use = Some(index);
+                        }
+                    }
+
+                    ui.add_space(10.0);
+
+                    // Cancel button
+                    if ui.button("Cancel").clicked() {
+                        self.show_use_item_dialog = false;
+                    }
+
+                    // Handle item usage
+                    if let Some(index) = item_to_use {
+                        let item = self.game_state.player.inventory.remove(index);
+                        self.game_state.use_item(item);
+                        self.show_use_item_dialog = false;
+                    }
+
                     ui.add_space(10.0);
                 });
             });
@@ -266,6 +321,7 @@ impl RoguelikeApp {
             ui.separator();
             ui.label("Arrow Keys / WASD: Move");
             ui.label("P: Pick up item");
+            ui.label("U: Use item");
             ui.label("Q: Quit");
             ui.label("More controls coming...");
         });

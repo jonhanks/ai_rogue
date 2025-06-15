@@ -377,4 +377,8 @@ impl GameState {
             self.add_log_message("There is nothing here to pick up.".to_string());
         }
     }
+
+    pub fn use_item(&mut self, item: Item) {
+        self.add_log_message(format!("You used {}, but nothing happens.", item.label));
+    }
 }
