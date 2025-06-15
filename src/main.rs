@@ -1,4 +1,5 @@
 use eframe::egui;
+use egui::Widget;
 
 mod state;
 use state::{GameState, TileType, NPC, NPCType, Item, ItemType, ItemUseResult, WorldItem};
@@ -305,11 +306,11 @@ impl RoguelikeApp {
                     .max_height(ui.available_height())
                     .show(ui, |ui| {
                         ui.style_mut().override_font_id = Some(egui::FontId::monospace(12.0));
-                        ui.spacing_mut().item_spacing.y = 0.0; // No spacing between rows
+                        ui.style_mut().spacing.item_spacing = egui::Vec2::new(0.0, 0.0);
 
                         for y in 0..visible_height {
                             ui.horizontal(|ui| {
-                                ui.spacing_mut().item_spacing.x = 0.0; // No spacing between characters
+                                ui.style_mut().spacing.item_spacing = egui::Vec2::new(0.0, 0.0);
                                 
                                 for x in 0..visible_width {
                                     let tile_char = if x == self.game_state.player.position.0 as usize &&
