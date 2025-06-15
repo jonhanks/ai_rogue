@@ -107,6 +107,11 @@ impl RoguelikeApp {
                 if dx != 0 || dy != 0 {
                     self.game_state.try_move_player(dx, dy);
                 }
+
+                // Check for pickup command
+                if i.key_pressed(egui::Key::P) {
+                    self.game_state.try_pickup_item();
+                }
             }
         });
     }
@@ -260,6 +265,7 @@ impl RoguelikeApp {
             ui.label("Controls");
             ui.separator();
             ui.label("Arrow Keys / WASD: Move");
+            ui.label("P: Pick up item");
             ui.label("Q: Quit");
             ui.label("More controls coming...");
         });

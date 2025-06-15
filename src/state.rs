@@ -359,4 +359,22 @@ impl GameState {
             }
         }
     }
+
+    pub fn try_pickup_item(&mut self) {
+        let player_pos = self.player.position;
+        
+        // Check if there's an item at the player's position
+        if let Some(item_index) = self.world.items.iter().position(|world_item| world_item.position == player_pos) {
+            // Remove item from world
+            let world_item = self.world.items.remove(item_index);
+            
+            // Add item to player inventory
+            self.player.inventory.push(world_item.item.clone());
+            
+            // Log pickup message
+            self.add_log_message(format!("You picked up {}.", world_item.item.label));
+        } else {
+            self.add_log_message("There is nothing here to pick up.".to_string());
+        }
+    }
 }
