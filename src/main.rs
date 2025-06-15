@@ -24,6 +24,12 @@ impl eframe::App for RoguelikeApp {
         // Handle input
         self.handle_input(ctx);
 
+        // Check for game over
+        if self.game_state.game_over {
+            self.show_game_over_dialog(ctx, frame);
+            return; // Don't process anything else if game is over
+        }
+
         // Show quit confirmation dialog if needed
         if self.show_quit_dialog {
             self.show_quit_confirmation_dialog(ctx, frame);
@@ -65,6 +71,12 @@ impl eframe::App for RoguelikeApp {
 
 impl RoguelikeApp {
     fn handle_input(&mut self, ctx: &egui::Context) {
+        // Check if player died and set game over
+        if !self.game_state.player.is_alive() {
+            self.game_state.game_over = true;
+            self.game_state.add_log_message("Your character has met its end...".to_string());
+        }
+
         // Handle keyboard input for movement and quit
         ctx.input(|i| {
             // Check for quit key first
@@ -73,8 +85,8 @@ impl RoguelikeApp {
                 return;
             }
 
-            // Only handle movement if quit dialog is not shown
-            if !self.show_quit_dialog {
+            // Only handle movement if quit dialog is not shown and game is not over
+            if !self.show_quit_dialog && !self.game_state.game_over {
                 let mut dx = 0;
                 let mut dy = 0;
 
@@ -121,6 +133,27 @@ impl RoguelikeApp {
                         }
                         ui.add_space(20.0);
                     });
+                    ui.add_space(10.0);
+                });
+            });
+    }
+
+    fn show_game_over_dialog(&mut self, ctx: &egui::Context, frame: &mut eframe::Frame) {
+        egui::Window::new("Game Over")
+            .collapsible(false)
+            .resizable(false)
+            .anchor(egui::Align2::CENTER_CENTER, egui::vec2(0.0, 0.0))
+            .show(ctx, |ui| {
+                ui.vertical_centered(|ui| {
+                    ui.add_space(10.0);
+                    ui.label("Your character has met its end!");
+                    ui.label("Game Over");
+                    ui.add_space(20.0);
+                    
+                    if ui.button("Ok").clicked() {
+                        ui.ctx().send_viewport_cmd(egui::ViewportCommand::Close);
+                    }
+                    
                     ui.add_space(10.0);
                 });
             });
