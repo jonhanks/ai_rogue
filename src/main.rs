@@ -3,12 +3,19 @@ use eframe::egui;
 mod state;
 use state::{GameState, TileType, NPC, NPCType, Item, ItemType};
 
-#[derive(Default)]
+#[derive(Default, PartialEq)]
+pub enum DialogState {
+    #[default]
+    NoDialog,
+    QuitConfirmation,
+    UseItem,
+    GameOver,
+    Victory,
+}
+
 pub struct RoguelikeApp {
     game_state: GameState,
-    show_quit_dialog: bool,
-    show_use_item_dialog: bool,
-    show_victory_dialog: bool,
+    dialog_state: DialogState,
 }
 
 impl RoguelikeApp {
@@ -16,9 +23,7 @@ impl RoguelikeApp {
         // Customize egui here with cc.egui_ctx.set_fonts and cc.egui_ctx.set_style
         Self {
             game_state: GameState::new(),
-            show_quit_dialog: false,
-            show_use_item_dialog: false,
-            show_victory_dialog: false,
+            dialog_state: DialogState::NoDialog,
         }
     }
 }
@@ -29,30 +34,34 @@ impl eframe::App for RoguelikeApp {
         self.handle_input(ctx);
 
         // Check for game over
-        if self.game_state.game_over {
-            self.show_game_over_dialog(ctx, frame);
-            return; // Don't process anything else if game is over
+        if self.game_state.game_over && self.dialog_state == DialogState::NoDialog {
+            self.dialog_state = DialogState::GameOver;
         }
 
         // Check for victory condition
-        if self.game_state.player.inventory.iter().any(|item| item.item_type == ItemType::Treasure) {
-            self.show_victory_dialog = true;
+        if self.dialog_state == DialogState::NoDialog && self.game_state.player.inventory.iter().any(|item| item.item_type == ItemType::Treasure) {
+            self.dialog_state = DialogState::Victory;
         }
 
-        // Show victory dialog if needed
-        if self.show_victory_dialog {
-            self.show_victory_dialog_window(ctx, frame);
-            return; // Don't process anything else if player won
-        }
-
-        // Show quit confirmation dialog if needed
-        if self.show_quit_dialog {
-            self.show_quit_confirmation_dialog(ctx, frame);
-        }
-
-        // Show use item dialog if needed
-        if self.show_use_item_dialog {
-            self.show_use_item_dialog_window(ctx, frame);
+        // Show appropriate dialog
+        match self.dialog_state {
+            DialogState::GameOver => {
+                self.show_game_over_dialog(ctx, frame);
+                return; // Don't process anything else if game is over
+            }
+            DialogState::Victory => {
+                self.show_victory_dialog_window(ctx, frame);
+                return; // Don't process anything else if player won
+            }
+            DialogState::QuitConfirmation => {
+                self.show_quit_confirmation_dialog(ctx, frame);
+            }
+            DialogState::UseItem => {
+                self.show_use_item_dialog_window(ctx, frame);
+            }
+            DialogState::NoDialog => {
+                // Continue with normal game processing
+            }
         }
 
         // Main UI layout
@@ -101,12 +110,12 @@ impl RoguelikeApp {
         ctx.input(|i| {
             // Check for quit key first
             if i.key_pressed(egui::Key::Q) {
-                self.show_quit_dialog = true;
+                self.dialog_state = DialogState::QuitConfirmation;
                 return;
             }
 
-            // Only handle movement if no dialogs are shown and game is not over
-            if !self.show_quit_dialog && !self.show_use_item_dialog && !self.game_state.game_over {
+            // Only handle movement and commands if no dialog is shown
+            if self.dialog_state == DialogState::NoDialog {
                 let mut dx = 0;
                 let mut dy = 0;
 
@@ -136,7 +145,7 @@ impl RoguelikeApp {
                 // Check for use item command
                 if i.key_pressed(egui::Key::U) {
                     if !self.game_state.player.inventory.is_empty() {
-                        self.show_use_item_dialog = true;
+                        self.dialog_state = DialogState::UseItem;
                     } else {
                         self.game_state.add_log_message("You have no items to use.".to_string());
                     }
@@ -163,7 +172,7 @@ impl RoguelikeApp {
                         }
                         ui.add_space(20.0);
                         if ui.button("No").clicked() {
-                            self.show_quit_dialog = false;
+                            self.dialog_state = DialogState::NoDialog;
                         }
                         ui.add_space(20.0);
                     });
@@ -217,14 +226,14 @@ impl RoguelikeApp {
 
                     // Cancel button
                     if ui.button("Cancel").clicked() {
-                        self.show_use_item_dialog = false;
+                        self.dialog_state = DialogState::NoDialog;
                     }
 
                     // Handle item usage
                     if let Some(index) = item_to_use {
                         let item = self.game_state.player.inventory.remove(index);
                         self.game_state.use_item(item);
-                        self.show_use_item_dialog = false;
+                        self.dialog_state = DialogState::NoDialog;
                     }
 
                     ui.add_space(10.0);
