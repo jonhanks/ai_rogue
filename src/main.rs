@@ -313,27 +313,26 @@ impl RoguelikeApp {
                                 ui.style_mut().spacing.item_spacing = egui::Vec2::new(0.0, 0.0);
                                 
                                 for x in 0..visible_width {
-                                    let tile_char = if x == self.game_state.player.position.0 as usize &&
+                                    let (tile_char, color) = if x == self.game_state.player.position.0 as usize &&
                                         y == self.game_state.player.position.1 as usize {
-                                        '@' // Player
+                                        ('@', (255, 255, 0)) // Player - bright yellow
                                     } else if let Some(npc) = self.game_state.npcs.iter().find(|npc| 
                                         npc.position.0 == x as i32 && npc.position.1 == y as i32) {
-                                        npc.get_display_char() // NPC
+                                        npc.display_info()
                                     } else if let Some(world_item) = self.game_state.world.items.iter().find(|item| 
                                         item.position.0 == x as i32 && item.position.1 == y as i32) {
-                                        world_item.item.get_display_char() // Item
+                                        world_item.item.display_info()
                                     } else {
                                         match self.game_state.world.get_tile(x as i32, y as i32) {
-                                            Some(TileType::Wall) => '#',
-                                            Some(TileType::Floor) => '.',
-                                            Some(TileType::Door) => '+',
-                                            Some(TileType::Stairs) => '>',
-                                            Some(TileType::Empty) => ' ',
-                                            None => ' ',
+                                            Some(tile) => tile.display_info(),
+                                            None => (' ', (0, 0, 0)),
                                         }
                                     };
                                     
-                                    let label = egui::Label::new(tile_char.to_string()).sense(egui::Sense::hover());
+                                    let label = egui::Label::new(
+                                        egui::RichText::new(tile_char.to_string())
+                                            .color(egui::Color32::from_rgb(color.0, color.1, color.2))
+                                    ).sense(egui::Sense::hover());
                                     let response = ui.add(label);
                                     
                                     if response.hovered() {

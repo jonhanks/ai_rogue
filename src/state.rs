@@ -63,6 +63,18 @@ pub enum TileType {
     Empty,
 }
 
+impl TileType {
+    pub fn display_info(&self) -> (char, (u8, u8, u8)) {
+        match self {
+            TileType::Wall => ('#', (100, 100, 100)), // Dark gray
+            TileType::Floor => ('.', (160, 140, 120)), // Light brown
+            TileType::Door => ('+', (139, 69, 19)), // Brown
+            TileType::Stairs => ('>', (128, 128, 128)), // Gray
+            TileType::Empty => (' ', (0, 0, 0)), // Black
+        }
+    }
+}
+
 #[derive(Debug, Clone)]
 pub struct NPC {
     pub position: (i32, i32),
@@ -120,6 +132,21 @@ impl Item {
             ItemType::Treasure => '$',
         }
     }
+
+    pub fn display_info(&self) -> (char, (u8, u8, u8)) {
+        let char = self.get_display_char();
+        let color = match self.item_type {
+            ItemType::Weapon => (192, 192, 192), // Silver
+            ItemType::Armor => (139, 69, 19), // Brown
+            ItemType::Potion => (255, 0, 255), // Magenta
+            ItemType::Food => (255, 165, 0), // Orange
+            ItemType::Tool => (160, 160, 160), // Gray
+            ItemType::Key => (255, 215, 0), // Gold
+            ItemType::TreasureChest => (139, 69, 19), // Brown
+            ItemType::Treasure => (255, 215, 0), // Gold
+        };
+        (char, color)
+    }
 }
 
 #[derive(Debug, Clone)]
@@ -168,6 +195,18 @@ impl NPC {
             NPCType::Merchant => 'M',
             NPCType::Guard => 'G',
         }
+    }
+
+    pub fn display_info(&self) -> (char, (u8, u8, u8)) {
+        let char = self.get_display_char();
+        let color = match self.npc_type {
+            NPCType::Goblin => (0, 255, 0), // Green
+            NPCType::Orc => (180, 50, 50), // Dark red
+            NPCType::Skeleton => (200, 200, 200), // Light gray
+            NPCType::Merchant => (100, 150, 255), // Light blue
+            NPCType::Guard => (70, 70, 150), // Dark blue
+        };
+        (char, color)
     }
 
     pub fn move_to(&mut self, new_pos: (i32, i32)) {
