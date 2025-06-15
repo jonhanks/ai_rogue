@@ -1,7 +1,7 @@
 use eframe::egui;
 
 mod state;
-use state::{GameState, TileType, NPC, NPCType, Item, ItemType};
+use state::{GameState, TileType, NPC, NPCType, Item, ItemType, ItemUseResult, WorldItem};
 
 #[derive(Default, PartialEq)]
 pub enum DialogState {
@@ -234,7 +234,21 @@ impl RoguelikeApp {
                     // Handle item usage
                     if let Some(index) = item_to_use {
                         let item = self.game_state.player.inventory.remove(index);
-                        self.game_state.use_item(item);
+                        let result = self.game_state.use_item(item);
+                        
+                        // Handle the result
+                        if let Some(returned_item) = result.returned_to_inventory {
+                            self.game_state.player.inventory.push(returned_item);
+                        }
+                        
+                        for dropped_item in result.dropped_on_ground {
+                            self.game_state.world.items.push(WorldItem::new(
+                                self.game_state.player.position.0,
+                                self.game_state.player.position.1,
+                                dropped_item
+                            ));
+                        }
+                        
                         self.dialog_state = DialogState::NoDialog;
                     }
 

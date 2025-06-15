@@ -144,6 +144,12 @@ pub enum InteractionResult {
     Item(Item),
 }
 
+#[derive(Debug)]
+pub struct ItemUseResult {
+    pub returned_to_inventory: Option<Item>,
+    pub dropped_on_ground: Vec<Item>,
+}
+
 impl NPC {
     pub fn new(x: i32, y: i32, npc_type: NPCType, name: String) -> Self {
         Self {
@@ -380,7 +386,7 @@ impl GameState {
         }
     }
 
-    pub fn use_item(&mut self, item: Item) {
+    pub fn use_item(&mut self, item: Item) -> ItemUseResult {
         match item.item_type {
             ItemType::Key => {
                 // Check if player has a treasure chest
@@ -391,19 +397,31 @@ impl GameState {
                     // Log the opening message
                     self.add_log_message("When the key clicks in the lock the treasure chest spills open, dropping a pile of treasure on the ground".to_string());
                     
-                    // Create treasure item at player's position
+                    // Create treasure item to be dropped
                     let treasure = Item::new(
                         ItemType::Treasure,
                         "Pile of Treasure".to_string(),
                         "Glittering coins and gems scattered on the ground.".to_string(),
                     );
-                    self.world.items.push(WorldItem::new(self.player.position.0, self.player.position.1, treasure));
+                    
+                    ItemUseResult {
+                        returned_to_inventory: None, // Key was consumed
+                        dropped_on_ground: vec![treasure],
+                    }
                 } else {
-                    self.add_log_message(format!("You used {}, but you need a treasure chest to unlock.", item.label));
+                    self.add_log_message(format!("You need a treasure chest to use {}.", item.label));
+                    ItemUseResult {
+                        returned_to_inventory: Some(item), // Return the key since it wasn't used
+                        dropped_on_ground: vec![],
+                    }
                 }
             }
             _ => {
-                self.add_log_message(format!("You used {}, but nothing happens.", item.label));
+                self.add_log_message(format!("You don't know how to use {}.", item.label));
+                ItemUseResult {
+                    returned_to_inventory: Some(item), // Return the item since it wasn't used
+                    dropped_on_ground: vec![],
+                }
             }
         }
     }
