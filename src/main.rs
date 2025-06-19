@@ -27,6 +27,28 @@ pub enum AvailableGameType {
     Collection,
 }
 
+#[derive(Debug, Default)]
+pub struct WorldViewInteraction {
+    pub mouse_position: Option<(i32, i32)>,
+    pub clicked_position: Option<(i32, i32)>,
+}
+
+impl WorldViewInteraction {
+    pub fn new() -> Self {
+        Self::default()
+    }
+    
+    pub fn with_mouse_position(mut self, pos: Option<(i32, i32)>) -> Self {
+        self.mouse_position = pos;
+        self
+    }
+    
+    pub fn with_clicked_position(mut self, pos: Option<(i32, i32)>) -> Self {
+        self.clicked_position = pos;
+        self
+    }
+}
+
 impl AvailableGameType {
     pub fn get_name(&self) -> &str {
         match self {
@@ -110,7 +132,9 @@ impl eframe::App for RoguelikeApp {
         }
 
         // Main UI layout - only show if game is initialized
-        if self.game_state.is_some() {
+        if let Some(ref game_state) = self.game_state {
+            let mut world_interaction = WorldViewInteraction::new();
+            
             egui::CentralPanel::default().show(ctx, |ui| {
                 let desired_height = ui.available_height();
                 ui.horizontal(|ui| {
@@ -123,7 +147,7 @@ impl eframe::App for RoguelikeApp {
                                 ui.set_height(ui.available_height());
                                 ui.label("World View");
                                 ui.separator();
-                                self.draw_world_view(ui);
+                                world_interaction = self.draw_world_view(ui, game_state);
                             });
                         },
                     );
@@ -136,11 +160,14 @@ impl eframe::App for RoguelikeApp {
                         egui::Layout::top_down(egui::Align::Min),
                         |ui| {
                             ui.set_height(ui.available_height());
-                            self.draw_info_panel(ui);
+                            self.draw_info_panel(ui, game_state);
                         },
                     );
                 });
             });
+            
+            // Update mouse position based on interaction
+            self.mouse_world_pos = world_interaction.mouse_position;
         }
     }
 }
@@ -380,19 +407,19 @@ impl RoguelikeApp {
             });
     }
 
-    fn draw_world_view(&mut self, ui: &mut egui::Ui) {
-        if let Some(ref game_state) = self.game_state {
-            let available_size = ui.available_size();
+    fn draw_world_view(&self, ui: &mut egui::Ui, game_state: &GameState) -> WorldViewInteraction {
+        let mut interaction = WorldViewInteraction::new();
+        let available_size = ui.available_size();
 
-            // Draw the game world
-            ui.allocate_ui_with_layout(
-                available_size,
-                egui::Layout::top_down(egui::Align::Min),
-                |ui| {
-                    ui.label(format!("GOAL: {}", game_state.get_win_description()));
-                    ui.separator();
-                    ui.label(format!("World Size: {}x{}", game_state.world.size.0, game_state.world.size.1));
-                    ui.label(format!("Player Position: ({}, {})", game_state.player.position.0, game_state.player.position.1));
+        // Draw the game world
+        ui.allocate_ui_with_layout(
+            available_size,
+            egui::Layout::top_down(egui::Align::Min),
+            |ui| {
+                ui.label(format!("GOAL: {}", game_state.get_win_description()));
+                ui.separator();
+                ui.label(format!("World Size: {}x{}", game_state.world.size.0, game_state.world.size.1));
+                ui.label(format!("Player Position: ({}, {})", game_state.player.position.0, game_state.player.position.1));
                 ui.label(format!("Floor: {}", game_state.world.current_floor));
                 if let Some((x, y)) = self.mouse_world_pos {
                     ui.label(format!("Mouse Over: ({}, {})", x, y));
@@ -438,7 +465,7 @@ impl RoguelikeApp {
                                     let response = ui.add(label);
                                     
                                     if response.hovered() {
-                                        self.mouse_world_pos = Some((x as i32, y as i32));
+                                        interaction.mouse_position = Some((x as i32, y as i32));
                                     }
                                 }
                             });
@@ -446,112 +473,110 @@ impl RoguelikeApp {
                     });
             },
         );
-        }
+        
+        interaction
     }
 
-    fn draw_info_panel(&mut self, ui: &mut egui::Ui) {
-        if let Some(ref game_state) = self.game_state {
-            ui.group(|ui| {
-                ui.label("Player Stats");
-                ui.separator();
+    fn draw_info_panel(&self, ui: &mut egui::Ui, game_state: &GameState) {
+        ui.group(|ui| {
+            ui.label("Player Stats");
+            ui.separator();
 
-                ui.label(format!("Level: {}", game_state.player.level));
-                ui.label(format!("Health: {}/{}", game_state.player.health, game_state.player.max_health));
-                ui.label(format!("Experience: {}", game_state.player.experience));
-                ui.label(format!("Floor: {}", game_state.world.current_floor));
-                ui.label(format!("Position: ({}, {})", game_state.player.position.0, game_state.player.position.1));
-            });
+            ui.label(format!("Level: {}", game_state.player.level));
+            ui.label(format!("Health: {}/{}", game_state.player.health, game_state.player.max_health));
+            ui.label(format!("Experience: {}", game_state.player.experience));
+            ui.label(format!("Floor: {}", game_state.world.current_floor));
+            ui.label(format!("Position: ({}, {})", game_state.player.position.0, game_state.player.position.1));
+        });
 
-            ui.add_space(10.0);
+        ui.add_space(10.0);
 
-            ui.group(|ui| {
-                ui.label("Inventory");
-                ui.separator();
-                if game_state.player.inventory.is_empty() {
-                    ui.label("Empty");
-                } else {
-                    for item in &game_state.player.inventory {
-                        ui.label(&item.label);
-                    }
+        ui.group(|ui| {
+            ui.label("Inventory");
+            ui.separator();
+            if game_state.player.inventory.is_empty() {
+                ui.label("Empty");
+            } else {
+                for item in &game_state.player.inventory {
+                    ui.label(&item.label);
                 }
-            });
-
-            ui.add_space(10.0);
-
-            ui.group(|ui| {
-                ui.label("Message Log");
-                ui.separator();
-
-                egui::ScrollArea::vertical()
-                    .max_height(200.0)
-                    .stick_to_bottom(true)
-                    .show(ui, |ui| {
-                        for message in &game_state.log_messages {
-                            ui.label(message);
-                        }
-                    });
-            });
-
-            ui.add_space(10.0);
-
-            // Show hover description if mouse is over a map position
-            if self.mouse_world_pos.is_some() {
-                self.draw_hover_description(ui);
-                ui.add_space(10.0);
             }
+        });
 
-            ui.group(|ui| {
-                ui.label("Controls");
-                ui.separator();
-                ui.label("Arrow Keys / WASD: Move");
-                ui.label("P: Pick up item");
-                ui.label("U: Use item");
-                ui.label("Q: Quit");
-                ui.label("More controls coming...");
-            });
+        ui.add_space(10.0);
+
+        ui.group(|ui| {
+            ui.label("Message Log");
+            ui.separator();
+
+            egui::ScrollArea::vertical()
+                .max_height(200.0)
+                .stick_to_bottom(true)
+                .show(ui, |ui| {
+                    for message in &game_state.log_messages {
+                        ui.label(message);
+                    }
+                });
+        });
+
+        ui.add_space(10.0);
+
+        // Show hover description if mouse is over a map position
+        if self.mouse_world_pos.is_some() {
+            self.draw_hover_description(ui, game_state);
+            ui.add_space(10.0);
         }
+
+        ui.group(|ui| {
+            ui.label("Controls");
+            ui.separator();
+            ui.label("Arrow Keys / WASD: Move");
+            ui.label("P: Pick up item");
+            ui.label("U: Use item");
+            ui.label("Q: Quit");
+            ui.label("More controls coming...");
+        });
     }
 
-    fn draw_hover_description(&mut self, ui: &mut egui::Ui) {
+    fn draw_hover_description(&self, ui: &mut egui::Ui, game_state: &GameState) {
         if let Some((hover_x, hover_y)) = self.mouse_world_pos {
-            if let Some(ref game_state) = self.game_state {
-                ui.group(|ui| {
-                    ui.label("Location Details");
-                    ui.separator();
-                    
-                    // Check what's at this position
-                    let mut descriptions = Vec::new();
-                    
-                    // Check if player is here
-                    if game_state.player.position.0 == hover_x && 
-                       game_state.player.position.1 == hover_y {
-                        descriptions.push("Player (@) is here".to_string());
-                    }
-                    
-                    // Check for NPCs
-                    if let Some(npc) = game_state.npcs.iter().find(|npc| 
-                        npc.position.0 == hover_x && npc.position.1 == hover_y) {
-                        descriptions.push(format!("{} ({}) - {}", npc.name, npc.get_display_char(), 
-                            match npc.npc_type {
-                                NPCType::Goblin => "A mischievous goblin",
-                                NPCType::Orc => "A fierce orc warrior",
-                                NPCType::Skeleton => "Ancient bones animated by dark magic",
-                                NPCType::Merchant => "A traveling merchant",
-                                NPCType::Guard => "A stalwart guard",
-                            }));
-                    }
-                    
-                    // Check for items
-                    if let Some(world_item) = game_state.world.items.iter().find(|item| 
-                        item.position.0 == hover_x && item.position.1 == hover_y) {
-                        descriptions.push(format!("{} ({}) - {}", 
-                            world_item.item.label, 
-                            world_item.item.get_display_char(), 
-                            world_item.item.description));
-                    }
-                    
-                    // Check tile type
-                    if let Some(tile) = game_state.world.get_tile(hover_x, hover_y) {
+            ui.group(|ui| {
+                ui.label("Location Details");
+                ui.separator();
+                
+                // Check what's at this position
+                let mut descriptions = Vec::new();
+                
+                // Check if player is here
+                if game_state.player.position.0 == hover_x && 
+                   game_state.player.position.1 == hover_y {
+                    descriptions.push("Player (@) is here".to_string());
+                }
+                
+                // Check for NPCs
+                if let Some(npc) = game_state.npcs.iter().find(|npc| 
+                    npc.position.0 == hover_x && npc.position.1 == hover_y) {
+                    descriptions.push(format!("{} ({}) - {}", npc.name, npc.get_display_char(), 
+                        match npc.npc_type {
+                            NPCType::Goblin => "A mischievous goblin",
+                            NPCType::Orc => "A fierce orc warrior",
+                            NPCType::Skeleton => "Ancient bones animated by dark magic",
+                            NPCType::Merchant => "A traveling merchant",
+                            NPCType::Guard => "A stalwart guard",
+                        }));
+                }
+                
+                // Check for items
+                if let Some(world_item) = game_state.world.items.iter().find(|item| 
+                    item.position.0 == hover_x && item.position.1 == hover_y) {
+                    descriptions.push(format!("{} ({}) - {}", 
+                        world_item.item.label, 
+                        world_item.item.get_display_char(), 
+                        world_item.item.description));
+                }
+                
+                // Check tile type
+                if let Some(tile) = game_state.world.get_tile(hover_x, hover_y) {
                     let tile_desc = match tile {
                         TileType::Wall => "Solid stone wall",
                         TileType::Floor => "Stone floor",
@@ -580,7 +605,6 @@ impl RoguelikeApp {
                     }
                 }
             });
-            }
         }
     }
 }
