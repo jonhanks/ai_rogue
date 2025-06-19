@@ -1,8 +1,7 @@
 use eframe::egui;
-use egui::Widget;
 
 mod state;
-use state::{GameState, TileType, NPC, NPCType, Item, ItemType, ItemUseResult, WorldItem};
+use state::{GameState, TileType, NPCType, ItemType, WorldItem};
 
 #[derive(Default, PartialEq)]
 pub enum DialogState {
@@ -21,7 +20,7 @@ pub struct RoguelikeApp {
 }
 
 impl RoguelikeApp {
-    pub fn new(cc: &eframe::CreationContext<'_>) -> Self {
+    pub fn new(_cc: &eframe::CreationContext<'_>) -> Self {
         // Customize egui here with cc.egui_ctx.set_fonts and cc.egui_ctx.set_style
         Self {
             game_state: GameState::new(),
@@ -157,7 +156,7 @@ impl RoguelikeApp {
         });
     }
 
-    fn show_quit_confirmation_dialog(&mut self, ctx: &egui::Context, frame: &mut eframe::Frame) {
+    fn show_quit_confirmation_dialog(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
         egui::Window::new("Quit Game")
             .collapsible(false)
             .resizable(false)
@@ -184,7 +183,7 @@ impl RoguelikeApp {
             });
     }
 
-    fn show_game_over_dialog(&mut self, ctx: &egui::Context, frame: &mut eframe::Frame) {
+    fn show_game_over_dialog(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
         egui::Window::new("Game Over")
             .collapsible(false)
             .resizable(false)
@@ -258,7 +257,7 @@ impl RoguelikeApp {
             });
     }
 
-    fn show_victory_dialog_window(&mut self, ctx: &egui::Context, frame: &mut eframe::Frame) {
+    fn show_victory_dialog_window(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
         egui::Window::new("Victory!")
             .collapsible(false)
             .resizable(false)
