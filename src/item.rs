@@ -10,6 +10,9 @@ pub enum ItemType {
     Key,
     TreasureChest,
     Treasure,
+    Gem,
+    Scroll,
+    Potion,
 }
 
 #[derive(Debug)]
@@ -32,6 +35,9 @@ impl Item {
             ItemType::Key => '-',
             ItemType::TreasureChest => '=',
             ItemType::Treasure => '$',
+            ItemType::Gem => '*',
+            ItemType::Scroll => '?',
+            ItemType::Potion => '!',
         }
     }
 
@@ -41,6 +47,9 @@ impl Item {
             ItemType::Key => (255, 215, 0), // Gold
             ItemType::TreasureChest => (139, 69, 19), // Brown
             ItemType::Treasure => (255, 215, 0), // Gold
+            ItemType::Gem => (255, 20, 147), // Deep pink
+            ItemType::Scroll => (245, 245, 220), // Beige
+            ItemType::Potion => (138, 43, 226), // Blue violet
         };
         (char, color)
     }
