@@ -1,9 +1,10 @@
 use eframe::egui;
 
+mod game_condition;
 mod item;
 mod npc;
 mod state;
-use item::ItemType;
+use game_condition::GameStatus;
 use npc::NPCType;
 use state::{GameState, TileType, WorldItem};
 
@@ -39,14 +40,19 @@ impl eframe::App for RoguelikeApp {
         // Handle input
         self.handle_input(ctx);
 
-        // Check for game over
-        if self.game_state.game_over && self.dialog_state == DialogState::NoDialog {
-            self.dialog_state = DialogState::GameOver;
-        }
-
-        // Check for victory condition
-        if self.dialog_state == DialogState::NoDialog && self.game_state.player.inventory.iter().any(|item| item.item_type == ItemType::Treasure) {
-            self.dialog_state = DialogState::Victory;
+        // Check game status using the new condition system
+        if self.dialog_state == DialogState::NoDialog {
+            match self.game_state.check_game_status() {
+                GameStatus::Lost => {
+                    self.dialog_state = DialogState::GameOver;
+                }
+                GameStatus::Won => {
+                    self.dialog_state = DialogState::Victory;
+                }
+                GameStatus::Playing => {
+                    // Continue playing
+                }
+            }
         }
 
         // Show appropriate dialog
@@ -106,9 +112,8 @@ impl eframe::App for RoguelikeApp {
 
 impl RoguelikeApp {
     fn handle_input(&mut self, ctx: &egui::Context) {
-        // Check if player died and set game over
+        // Add death message if player just died
         if !self.game_state.player.is_alive() {
-            self.game_state.game_over = true;
             self.game_state.add_log_message("Your character has met its end...".to_string());
         }
 
@@ -290,7 +295,7 @@ impl RoguelikeApp {
             available_size,
             egui::Layout::top_down(egui::Align::Min),
             |ui| {
-                ui.label("GOAL: Find and collect the treasure!");
+                ui.label(format!("GOAL: {}", self.game_state.get_win_description()));
                 ui.separator();
                 ui.label(format!("World Size: {}x{}", self.game_state.world.size.0, self.game_state.world.size.1));
                 ui.label(format!("Player Position: ({}, {})", self.game_state.player.position.0, self.game_state.player.position.1));

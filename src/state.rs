@@ -1,3 +1,4 @@
+use crate::game_condition::{GameCondition, GameStatus, TreasureHuntCondition};
 use crate::item::{Item, ItemType, ItemUseResult};
 use crate::npc::{NPC, NPCType, InteractionResult};
 
@@ -173,17 +174,20 @@ impl GameWorld {
     }
 }
 
-#[derive(Default)]
 pub struct GameState {
     pub player: Player,
     pub world: GameWorld,
     pub npcs: Vec<NPC>,
     pub log_messages: Vec<String>,
-    pub game_over: bool,
+    pub game_condition: Box<dyn GameCondition>,
 }
 
 impl GameState {
     pub fn new() -> Self {
+        Self::with_condition(Box::new(TreasureHuntCondition))
+    }
+
+    pub fn with_condition(game_condition: Box<dyn GameCondition>) -> Self {
         let mut npcs = Vec::new();
         npcs.push(NPC::new(5, 5, NPCType::Goblin, "Grob".to_string()));
         npcs.push(NPC::new(15, 8, NPCType::Merchant, "The Merchant".to_string()));
@@ -210,8 +214,20 @@ impl GameState {
                 "Press arrow keys to move.".to_string(),
                 "Explore carefully...".to_string(),
             ],
-            game_over: false,
+            game_condition,
         }
+    }
+
+    pub fn check_game_status(&self) -> GameStatus {
+        self.game_condition.check_status(self)
+    }
+
+    pub fn get_win_description(&self) -> &str {
+        self.game_condition.win_description()
+    }
+
+    pub fn get_loss_description(&self) -> &str {
+        self.game_condition.loss_description()
     }
 
     pub fn add_log_message(&mut self, message: String) {
