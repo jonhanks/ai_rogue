@@ -59,24 +59,50 @@ Movement is handled via keyboard input (Arrow keys or WASD) processed in the mai
 
 ## Recent Changes & Current Status
 
-### Completed Refactoring (Latest Session)
+### Completed Refactoring (Latest Sessions)
 1. **Module Restructuring**: Split code into separate modules (item.rs, npc.rs, game_condition.rs)
 2. **Game Condition System**: Implemented trait-based win/loss conditions for flexible game types
 3. **Constructor Usage**: Updated to use proper constructors instead of Default trait
-4. **Warning Cleanup**: Reduced compiler warnings from 13 to 7 by fixing unused imports and using constructors
+4. **Game Type Selection UI**: Added startup dialog for choosing game mode
+5. **Display Function Refactoring**: Cleaned up UI code with proper parameter passing
+
+### Game Type Selection System
+- **Startup Experience**: Modal dialog presents game type choices on launch
+- **Available Modes**: 
+  - Treasure Hunt: Find and collect treasure (classic mode)
+  - Survival Challenge: Survive for 50 turns without dying
+  - Item Collection: Collect 3 gems, 2 scrolls, and 1 potion
+- **New Item Types**: Added Gem (*), Scroll (?), and Potion (!) with unique colors
+- **Dynamic Goals**: Goal text updates based on selected game type
+
+### Display System Improvements
+- **Cleaner Function Signatures**: Display functions now take `&GameState` directly
+- **Reduced Code Duplication**: Eliminated repeated `Option<GameState>` checks
+- **WorldViewInteraction Structure**: Proper return type for world interactions
+- **Better Separation**: UI rendering separated from state management
+- **Immutable Display**: Display functions are now read-only operations
 
 ### Current Architecture State
 - ✅ Modular code organization with clear separation of concerns
 - ✅ Trait-based game condition system for extensible game rules
-- ✅ Clean module boundaries between UI, game logic, and data structures
+- ✅ Game type selection UI for varied gameplay experiences
+- ✅ Clean display function architecture with structured interactions
+- ✅ Extended item system supporting diverse game modes
 - ✅ Dynamic goal text based on active game condition
+
+### Code Quality Improvements
+- **Reduced Warnings**: From 13 to 5 compiler warnings
+- **Better Readability**: Less nested code, clearer function purposes
+- **Maintainability**: Easier to modify display logic without state concerns
+- **Extensibility**: Ready for new interaction types and game modes
 
 ### Remaining Warnings (Non-critical)
 - Some unused methods/variants that are intended for future features
 - These provide useful functionality for game expansion
 
 ### Next Potential Improvements
-- Implement additional game condition types
-- Add turn-based mechanics for survival conditions  
-- Expand NPC interaction system
-- Add more item types and effects
+- Create different map generators for different game types
+- Add turn-based mechanics for survival conditions
+- Implement click handling through WorldViewInteraction structure
+- Expand NPC interaction system with new dialog types
+- Add context menus and multi-selection capabilities
