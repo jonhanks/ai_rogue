@@ -8,4 +8,5 @@ target
 *.la
 *.pyo
 *.pyc
+.idea
 __pycache__
