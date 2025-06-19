@@ -1,3 +1,6 @@
+use crate::item::{Item, ItemType, ItemUseResult};
+use crate::npc::{NPC, NPCType, InteractionResult};
+
 #[derive(Debug, Clone)]
 pub struct Player {
     pub position: (i32, i32),
@@ -75,79 +78,8 @@ impl TileType {
     }
 }
 
-#[derive(Debug, Clone)]
-pub struct NPC {
-    pub position: (i32, i32),
-    pub inventory: Vec<Item>,
-    pub npc_type: NPCType,
-    pub name: String,
-}
 
-#[derive(Debug, Clone, PartialEq)]
-pub enum NPCType {
-    Goblin,
-    Orc,
-    Skeleton,
-    Merchant,
-    Guard,
-}
 
-#[derive(Debug, Clone)]
-pub struct Item {
-    pub item_type: ItemType,
-    pub label: String,
-    pub description: String,
-}
-
-#[derive(Debug, Clone, PartialEq)]
-pub enum ItemType {
-    Weapon,
-    Armor,
-    Potion,
-    Food,
-    Tool,
-    Key,
-    TreasureChest,
-    Treasure,
-}
-
-impl Item {
-    pub fn new(item_type: ItemType, label: String, description: String) -> Self {
-        Self {
-            item_type,
-            label,
-            description,
-        }
-    }
-
-    pub fn get_display_char(&self) -> char {
-        match self.item_type {
-            ItemType::Weapon => '/',
-            ItemType::Armor => '[',
-            ItemType::Potion => '!',
-            ItemType::Food => '%',
-            ItemType::Tool => '(',
-            ItemType::Key => '-',
-            ItemType::TreasureChest => '=',
-            ItemType::Treasure => '$',
-        }
-    }
-
-    pub fn display_info(&self) -> (char, (u8, u8, u8)) {
-        let char = self.get_display_char();
-        let color = match self.item_type {
-            ItemType::Weapon => (192, 192, 192), // Silver
-            ItemType::Armor => (139, 69, 19), // Brown
-            ItemType::Potion => (255, 0, 255), // Magenta
-            ItemType::Food => (255, 165, 0), // Orange
-            ItemType::Tool => (160, 160, 160), // Gray
-            ItemType::Key => (255, 215, 0), // Gold
-            ItemType::TreasureChest => (139, 69, 19), // Brown
-            ItemType::Treasure => (255, 215, 0), // Gold
-        };
-        (char, color)
-    }
-}
 
 #[derive(Debug, Clone)]
 pub struct WorldItem {
@@ -164,55 +96,8 @@ impl WorldItem {
     }
 }
 
-#[derive(Debug)]
-pub enum InteractionResult {
-    Nothing,
-    NPC(NPC),
-    Item(Item),
-}
 
-#[derive(Debug)]
-pub struct ItemUseResult {
-    pub returned_to_inventory: Option<Item>,
-    pub dropped_on_ground: Vec<Item>,
-}
 
-impl NPC {
-    pub fn new(x: i32, y: i32, npc_type: NPCType, name: String) -> Self {
-        Self {
-            position: (x, y),
-            inventory: Vec::new(),
-            npc_type,
-            name,
-        }
-    }
-
-    pub fn get_display_char(&self) -> char {
-        match self.npc_type {
-            NPCType::Goblin => 'g',
-            NPCType::Orc => 'O',
-            NPCType::Skeleton => 'S',
-            NPCType::Merchant => 'M',
-            NPCType::Guard => 'G',
-        }
-    }
-
-    pub fn display_info(&self) -> (char, (u8, u8, u8)) {
-        let char = self.get_display_char();
-        let color = match self.npc_type {
-            NPCType::Goblin => (0, 255, 0), // Green
-            NPCType::Orc => (180, 50, 50), // Dark red
-            NPCType::Skeleton => (200, 200, 200), // Light gray
-            NPCType::Merchant => (100, 150, 255), // Light blue
-            NPCType::Guard => (70, 70, 150), // Dark blue
-        };
-        (char, color)
-    }
-
-    pub fn move_to(&mut self, new_pos: (i32, i32)) {
-        self.position = new_pos;
-    }
-}
 
 impl Default for GameWorld {
     fn default() -> Self {
@@ -306,7 +191,7 @@ impl GameState {
         npcs.push(NPC::new(8, 20, NPCType::Guard, "Guard Captain".to_string()));
         npcs.push(NPC::new(30, 25, NPCType::Orc, "Orc Warrior".to_string()));
 
-        let mut world = GameWorld::default();
+        let mut world = GameWorld::new(50, 30);
         
         // Add treasure chest at a specific location
         let treasure_chest = Item::new(
@@ -317,7 +202,7 @@ impl GameState {
         world.items.push(WorldItem::new(35, 18, treasure_chest));
 
         Self {
-            player: Player::default(),
+            player: Player::new(10, 15),
             world,
             npcs,
             log_messages: vec![

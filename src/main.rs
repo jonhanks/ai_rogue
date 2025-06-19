@@ -1,7 +1,11 @@
 use eframe::egui;
 
+mod item;
+mod npc;
 mod state;
-use state::{GameState, TileType, NPCType, ItemType, WorldItem};
+use item::ItemType;
+use npc::NPCType;
+use state::{GameState, TileType, WorldItem};
 
 #[derive(Default, PartialEq)]
 pub enum DialogState {
