@@ -209,14 +209,18 @@ impl RoguelikeApp {
                         dx = 1;
                     }
 
+                    let mut player_acted = false;
+
                     // Try to move the player
                     if dx != 0 || dy != 0 {
                         game_state.try_move_player(dx, dy);
+                        player_acted = true;
                     }
 
                     // Check for pickup command
                     if i.key_pressed(egui::Key::P) {
                         game_state.try_pickup_item();
+                        player_acted = true;
                     }
 
                     // Check for use item command
@@ -226,6 +230,12 @@ impl RoguelikeApp {
                         } else {
                             game_state.add_log_message("You have no items to use.".to_string());
                         }
+                        player_acted = true;
+                    }
+
+                    // Process NPC actions after player acts
+                    if player_acted {
+                        game_state.process_npc_actions();
                     }
                 }
             }
@@ -376,6 +386,9 @@ impl RoguelikeApp {
                                     dropped_item
                                 ));
                             }
+                            
+                            // Process NPC actions after item use
+                            game_state.process_npc_actions();
                             
                             self.dialog_state = DialogState::NoDialog;
                         }

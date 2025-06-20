@@ -369,4 +369,26 @@ impl GameState {
             }
         }
     }
+
+    /// Process NPC actions for this turn
+    pub fn process_npc_actions(&mut self) {
+        // Process each NPC by temporarily removing it from the vector
+        let mut i = 0;
+        while i < self.npcs.len() {
+            let mut npc = self.npcs.remove(i);
+            
+            // Let the NPC perform its action
+            let log_messages = npc.perform_action(&mut self.world, &mut self.player);
+            
+            // Add any log messages from the NPC action
+            for message in log_messages {
+                self.add_log_message(message);
+            }
+            
+            // Put the NPC back in the vector
+            self.npcs.insert(i, npc);
+            
+            i += 1;
+        }
+    }
 }

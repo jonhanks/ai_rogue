@@ -1,4 +1,5 @@
 use crate::item::Item;
+use crate::state::{GameWorld, Player};
 
 #[derive(Debug, Clone)]
 pub struct NPC {
@@ -52,5 +53,12 @@ impl NPC {
             NPCType::Guard => (70, 70, 150), // Dark blue
         };
         (char, color)
+    }
+
+    /// Perform an action for this NPC during the game turn
+    /// For now, this is a placeholder that does nothing
+    pub fn perform_action(&mut self, _world: &mut GameWorld, _player: &mut Player) -> Vec<String> {
+        // Return empty vector for now - no log messages
+        Vec::new()
     }
 }
