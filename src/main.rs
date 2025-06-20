@@ -61,7 +61,7 @@ impl AvailableGameType {
     pub fn get_description(&self) -> &str {
         match self {
             AvailableGameType::TreasureHunt => "Find and collect the treasure while avoiding dangers.",
-            AvailableGameType::Survival => "Survive for 50 turns without dying.",
+            AvailableGameType::Survival => "Survive for 200 turns without dying.",
             AvailableGameType::Collection => "Collect 3 gems, 2 scrolls, and 1 potion.",
         }
     }
@@ -281,7 +281,7 @@ impl RoguelikeApp {
     fn start_game_with_type(&mut self, game_type: AvailableGameType) {
         let game_condition: Box<dyn game_condition::GameCondition> = match game_type {
             AvailableGameType::TreasureHunt => Box::new(TreasureHuntCondition),
-            AvailableGameType::Survival => Box::new(SurvivalCondition::new(50)),
+            AvailableGameType::Survival => Box::new(SurvivalCondition::new(200)),
             AvailableGameType::Collection => Box::new(CollectionCondition::new(vec![
                 (ItemType::Gem, 3),
                 (ItemType::Scroll, 2),

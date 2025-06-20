@@ -189,24 +189,14 @@ impl GameState {
 
     pub fn with_condition(game_condition: Box<dyn GameCondition>) -> Self {
         let mut npcs = Vec::new();
-        npcs.push(NPC::new(5, 5, NPCType::Goblin, "Grob".to_string()));
-        npcs.push(NPC::new(15, 8, NPCType::Merchant, "The Merchant".to_string()));
-        npcs.push(NPC::new(25, 12, NPCType::Skeleton, "Bonecrusher".to_string()));
-        npcs.push(NPC::new(8, 20, NPCType::Guard, "Guard Captain".to_string()));
-        npcs.push(NPC::new(30, 25, NPCType::Orc, "Orc Warrior".to_string()));
-
         let mut world = GameWorld::new(50, 30);
+        let mut player = Player::default();
         
-        // Add treasure chest at a specific location
-        let treasure_chest = Item::new(
-            ItemType::TreasureChest,
-            "Treasure Chest".to_string(),
-            "A mysterious chest that might contain valuable items.".to_string(),
-        );
-        world.items.push(WorldItem::new(35, 18, treasure_chest));
+        // Let the game condition set up the world, NPCs, and player position
+        game_condition.setup_world(&mut world, &mut npcs, &mut player);
 
         Self {
-            player: Player::new(10, 15),
+            player,
             world,
             npcs,
             log_messages: vec![

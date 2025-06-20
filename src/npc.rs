@@ -64,6 +64,9 @@ impl NPC {
             NPCType::Merchant => {
                 self.merchant_behavior(world, player, other_npcs, &mut log_messages);
             }
+            NPCType::Orc => {
+                self.orc_behavior(world, player, other_npcs, &mut log_messages);
+            }
             _ => {
                 // Other NPCs do nothing for now
             }
@@ -142,5 +145,93 @@ impl NPC {
         world.items.push(WorldItem::new(self.position.0, self.position.1, item));
         
         log_messages.push(format!("The merchant dropped a {} from his cart!", name));
+    }
+    
+    /// Orc-specific behavior: aggressive movement towards player
+    fn orc_behavior(&mut self, world: &mut GameWorld, player: &mut Player, other_npcs: &[NPC], log_messages: &mut Vec<String>) {
+        let player_distance = self.distance_to_player(player);
+        
+        if player_distance <= 5.0 {
+            // Close to player - move towards them or attack
+            self.move_towards_player_or_attack(world, player, other_npcs, log_messages);
+        } else {
+            // Far from player - move randomly
+            let mut rng = rand::thread_rng();
+            self.try_random_move_orc(world, player, other_npcs, &mut rng);
+        }
+    }
+    
+    /// Calculate distance to player
+    fn distance_to_player(&self, player: &Player) -> f32 {
+        let dx = (self.position.0 - player.position.0) as f32;
+        let dy = (self.position.1 - player.position.1) as f32;
+        (dx * dx + dy * dy).sqrt()
+    }
+    
+    /// Move towards player or attack if adjacent
+    fn move_towards_player_or_attack(&mut self, world: &mut GameWorld, player: &mut Player, other_npcs: &[NPC], log_messages: &mut Vec<String>) {
+        let dx = player.position.0 - self.position.0;
+        let dy = player.position.1 - self.position.1;
+        
+        // Calculate the direction to move (one step towards player)
+        let move_x = if dx > 0 { 1 } else if dx < 0 { -1 } else { 0 };
+        let move_y = if dy > 0 { 1 } else if dy < 0 { -1 } else { 0 };
+        
+        let new_pos = (self.position.0 + move_x, self.position.1 + move_y);
+        
+        // Check if we would move onto the player - if so, attack instead
+        if new_pos == player.position {
+            // Attack the player
+            let mut rng = rand::thread_rng();
+            let damage = rng.gen_range(5..=20);
+            player.take_damage(damage);
+            log_messages.push(format!("The orc {} attacks you for {} damage!", self.name, damage));
+            return;
+        }
+        
+        // Check if the new position is valid and walkable
+        if !world.is_valid_position(new_pos.0, new_pos.1) || !world.is_walkable(new_pos.0, new_pos.1) {
+            return; // Can't move there
+        }
+        
+        // Check if another NPC is at the new position
+        if other_npcs.iter().any(|npc| npc.position == new_pos) {
+            return; // Can't move into another NPC
+        }
+        
+        // Move the orc
+        self.position = new_pos;
+    }
+    
+    /// Try to move the orc randomly (for when far from player)
+    fn try_random_move_orc(&mut self, world: &mut GameWorld, player: &Player, other_npcs: &[NPC], rng: &mut impl Rng) {
+        let directions = [(0, 1), (0, -1), (1, 0), (-1, 0)]; // down, up, right, left
+        
+        // Try up to 2 times to find a valid move
+        for _attempt in 0..2 {
+            let (dx, dy) = directions[rng.gen_range(0..directions.len())];
+            let new_pos = (self.position.0 + dx, self.position.1 + dy);
+            
+            // Check if the new position is valid and walkable
+            if !world.is_valid_position(new_pos.0, new_pos.1) || !world.is_walkable(new_pos.0, new_pos.1) {
+                continue; // Try another direction
+            }
+            
+            // Check if player is at the new position
+            if player.position == new_pos {
+                continue; // Try another direction
+            }
+            
+            // Check if another NPC is at the new position
+            if other_npcs.iter().any(|npc| npc.position == new_pos) {
+                continue; // Try another direction
+            }
+            
+            // Valid move found - move the orc
+            self.position = new_pos;
+            return; // Successfully moved, exit the function
+        }
+        
+        // If we get here, no valid move was found after 2 attempts
     }
 }
