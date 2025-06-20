@@ -395,7 +395,13 @@ impl RoguelikeApp {
                 ui.vertical_centered(|ui| {
                     ui.add_space(10.0);
                     ui.label("Congratulations!");
-                    ui.label("You have found the treasure and won the game!");
+                    
+                    let victory_message = if let Some(ref game_state) = self.game_state {
+                        game_state.get_victory_message()
+                    } else {
+                        "Congratulations, you are surrounded by adoring masses chanting your name and cheering your victory! If only you knew how you won!"
+                    };
+                    ui.label(victory_message);
                     ui.add_space(20.0);
                     
                     if ui.button("Ok").clicked() {

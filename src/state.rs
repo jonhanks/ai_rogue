@@ -222,8 +222,12 @@ impl GameState {
         self.game_condition.check_status(self)
     }
 
-    pub fn get_win_description(&self) -> &str {
+    pub fn get_win_description(&self) -> String {
         self.game_condition.win_description()
+    }
+
+    pub fn get_victory_message(&self) -> &str {
+        self.game_condition.victory_message()
     }
 
     pub fn get_loss_description(&self) -> &str {

@@ -14,10 +14,13 @@ pub trait GameCondition {
     fn check_status(&self, game_state: &GameState) -> GameStatus;
     
     /// Get a description of the win condition for this game type
-    fn win_description(&self) -> &str;
+    fn win_description(&self) -> String;
     
     /// Get a description of the loss condition for this game type
     fn loss_description(&self) -> &str;
+    
+    /// Get the victory message shown when the player wins
+    fn victory_message(&self) -> &str;
 }
 
 /// Default treasure hunt game condition
@@ -41,12 +44,16 @@ impl GameCondition for TreasureHuntCondition {
         GameStatus::Playing
     }
     
-    fn win_description(&self) -> &str {
-        "Find and collect the treasure!"
+    fn win_description(&self) -> String {
+        "Find and collect the treasure!".to_string()
     }
     
     fn loss_description(&self) -> &str {
         "Don't let your health reach zero!"
+    }
+    
+    fn victory_message(&self) -> &str {
+        "Congratulations! You have found the treasure and escaped the dungeon!"
     }
 }
 
@@ -81,12 +88,16 @@ impl GameCondition for SurvivalCondition {
         GameStatus::Playing
     }
     
-    fn win_description(&self) -> &str {
-        "Survive for the required number of turns!"
+    fn win_description(&self) -> String {
+        format!("Survive for {} turns!", self.target_turns)
     }
     
     fn loss_description(&self) -> &str {
         "Don't let your health reach zero!"
+    }
+    
+    fn victory_message(&self) -> &str {
+        "Amazing! You have survived the required number of turns and proven your resilience!"
     }
 }
 
@@ -125,11 +136,15 @@ impl GameCondition for CollectionCondition {
         GameStatus::Won
     }
     
-    fn win_description(&self) -> &str {
-        "Collect all required items!"
+    fn win_description(&self) -> String {
+        "Collect all required items!".to_string()
     }
     
     fn loss_description(&self) -> &str {
         "Don't let your health reach zero!"
+    }
+    
+    fn victory_message(&self) -> &str {
+        "Excellent! You have collected all the required items and completed your quest!"
     }
 }
