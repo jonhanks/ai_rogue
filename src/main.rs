@@ -235,6 +235,7 @@ impl RoguelikeApp {
 
                     // Process NPC actions after player acts
                     if player_acted {
+                        game_state.increment_turn();
                         game_state.process_npc_actions();
                     }
                 }
@@ -388,6 +389,7 @@ impl RoguelikeApp {
                             }
                             
                             // Process NPC actions after item use
+                            game_state.increment_turn();
                             game_state.process_npc_actions();
                             
                             self.dialog_state = DialogState::NoDialog;
@@ -506,6 +508,7 @@ impl RoguelikeApp {
             ui.label(format!("Experience: {}", game_state.player.experience));
             ui.label(format!("Floor: {}", game_state.world.current_floor));
             ui.label(format!("Position: ({}, {})", game_state.player.position.0, game_state.player.position.1));
+            ui.label(game_state.get_turn_info());
         });
 
         ui.add_space(10.0);

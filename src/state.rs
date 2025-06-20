@@ -172,6 +172,23 @@ impl GameWorld {
     pub fn is_valid_position(&self, x: i32, y: i32) -> bool {
         x >= 0 && y >= 0 && (x as usize) < self.size.0 && (y as usize) < self.size.1
     }
+    
+    /// Add random wall obstacles to the map for variety
+    pub fn add_random_obstacles(&mut self, obstacle_count: usize) {
+        use rand::Rng;
+        let mut rng = rand::thread_rng();
+        
+        for _ in 0..obstacle_count {
+            // Pick a random interior position (not on the border walls)
+            let x = rng.gen_range(2..self.size.0 - 2);
+            let y = rng.gen_range(2..self.size.1 - 2);
+            
+            // Only place obstacle if the position is currently empty
+            if self.tiles[x][y] == TileType::Empty {
+                self.tiles[x][y] = TileType::Wall;
+            }
+        }
+    }
 }
 
 pub struct GameState {
@@ -180,6 +197,7 @@ pub struct GameState {
     pub npcs: Vec<NPC>,
     pub log_messages: Vec<String>,
     pub game_condition: Box<dyn GameCondition>,
+    pub turn_counter: u32,
 }
 
 impl GameState {
@@ -205,6 +223,7 @@ impl GameState {
                 "Explore carefully...".to_string(),
             ],
             game_condition,
+            turn_counter: 0,
         }
     }
 
@@ -222,6 +241,14 @@ impl GameState {
 
     pub fn get_loss_description(&self) -> &str {
         self.game_condition.loss_description()
+    }
+    
+    pub fn increment_turn(&mut self) {
+        self.turn_counter += 1;
+    }
+    
+    pub fn get_turn_info(&self) -> String {
+        format!("Turn: {}", self.turn_counter)
     }
 
     pub fn add_log_message(&mut self, message: String) {

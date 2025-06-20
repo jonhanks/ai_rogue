@@ -104,9 +104,7 @@ impl GameCondition for SurvivalCondition {
         }
         
         // Check win condition - survived enough turns
-        // Note: We'd need to add a turn counter to GameState for this to work
-        // For now, this is just a placeholder implementation
-        if game_state.log_messages.len() >= self.target_turns as usize {
+        if game_state.turn_counter >= self.target_turns {
             return GameStatus::Won;
         }
         
@@ -127,6 +125,11 @@ impl GameCondition for SurvivalCondition {
     
     fn setup_world(&self, world: &mut crate::state::GameWorld, npcs: &mut Vec<crate::npc::NPC>, player: &mut crate::state::Player) {
         let mut rng = rand::thread_rng();
+        
+        // Add random obstacles to make the map more interesting
+        let obstacle_count = rng.gen_range(15..30);
+        world.add_random_obstacles(obstacle_count);
+        
         let mut occupied_positions = Vec::new();
         
         // Helper function to find a random valid position
