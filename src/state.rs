@@ -377,8 +377,8 @@ impl GameState {
         while i < self.npcs.len() {
             let mut npc = self.npcs.remove(i);
             
-            // Let the NPC perform its action
-            let log_messages = npc.perform_action(&mut self.world, &mut self.player);
+            // Let the NPC perform its action, passing the remaining NPCs as a slice
+            let log_messages = npc.perform_action(&mut self.world, &mut self.player, self.npcs.as_slice());
             
             // Add any log messages from the NPC action
             for message in log_messages {
